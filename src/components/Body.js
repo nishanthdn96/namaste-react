@@ -1,14 +1,18 @@
 import RestaurantCards, { offerCard } from "./RestaurantCard";
 import resInfo from "../utils/mockData";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Shimmer from "./Shimmer";
 import { Link } from "react-router-dom";
 import useRestaurantList from "../utils/useRestaurantList";
 import useOnlineStatus from "../utils/useOnlineStatus";
+import UserContext from "../utils/UserContext";
 const Body = () => {
   const [searchText, setSearchText] = useState("");
-  const listOfRestaurants = useRestaurantList();
+  const [listOfRestaurants, setListOfRestaurants] = useRestaurantList();
+  const [filteredRestaurants, setFilteredRestaurants] =
+    useRestaurantList(listOfRestaurants);
 
+  const { loggedInUser, setUserName } = useContext(UserContext);
   const onlineStatus = useOnlineStatus();
   if (onlineStatus === false) {
     return <h1>Please check your internet connection.</h1>;
@@ -19,48 +23,62 @@ const Body = () => {
   return listOfRestaurants.length === 0 ? (
     <Shimmer />
   ) : (
-    <div className="body">
+    <div className="bg-gray-100 shadow-lg">
       <div className="filter flex">
-        <div className="search p-4 m-4">
+        <div className="search p-4 m-4 flex items-center">
           <input
             type="text"
             className="search-box border border-solid border-black"
             value={searchText}
             onChange={(e) => {
               setSearchText(e.target.value);
+              console.log("eee", e.target.value);
+              if (e.target.value === "") {
+                setFilteredRestaurants(listOfRestaurants);
+              } else {
+                setFilteredRestaurants(
+                  listOfRestaurants.filter((res) => {
+                    const restroName = res.info.name.toLowerCase();
+                    return restroName.includes(e.target.value.toLowerCase());
+                  })
+                );
+              }
             }}
           ></input>
-          <button
-            className="px-4 py-2 bg-green-100 m-4 rounded-xl"
-            onClick={() => {
-              const filteredRestaurant = listOfRestaurants.filter((res) => {
-                return res.info.name.includes(searchText);
-              });
-              console.log(filteredRestaurant);
-              setListOfRestaurants(filteredRestaurant);
-            }}
-          >
-            Search
-          </button>
         </div>
-        <div className="search p-4 m-4">
+        <div className="search p-4 m-4 flex items-center">
           <button
             className="px-4 py-2 bg-gray-50 m-4 rounded-xl"
             onClick={() => {
-              const filteredRestaurants = listOfRestaurants.filter(
-                (rest) => rest.info.avgRating > 4
+              setFilteredRestaurants(
+                listOfRestaurants.filter((rest) => rest.info.avgRating > 4)
               );
-              setListOfRestaurants(filteredRestaurants);
             }}
           >
             Top rated restaurants.
           </button>
+          <button
+            className="px-4 py-2 bg-gray-50 m-4 rounded-xl"
+            onClick={() => {
+              setFilteredRestaurants(listOfRestaurants);
+            }}
+          >
+            X
+          </button>
+        </div>
+        <div className="search m-4 p-4 flex items-center">
+          <lable> User name : </lable>
+          <input
+            className="border border-black p-2"
+            value={loggedInUser}
+            onChange={(e) => setUserName(e.target.value)}
+          ></input>
         </div>
       </div>
       <div className="res-container flex flex-wrap ">
-        {listOfRestaurants.map((rest) => (
+        {filteredRestaurants.map((rest) => (
           <Link to={`/restaurant/${rest.info.id}`} key={rest.info.id}>
-            {rest.info.aggregatedDiscountInfoV3.discountTag ? (
+            {rest.info?.aggregatedDiscountInfoV3?.discountTag ? (
               <RestaurantCardOffer resObj={rest} />
             ) : (
               <RestaurantCards resObj={rest} />

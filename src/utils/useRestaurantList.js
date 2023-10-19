@@ -15,7 +15,7 @@ const useRestaurantList = () => {
       json.data.cards[5].card.card.gridElements.infoWithStyle.restaurants;
     setListOfRestaurants(listOfRestaurants);
   };
-  return listOfRestaurants;
+  return [listOfRestaurants, setListOfRestaurants];
 };
 
 export default useRestaurantList;
